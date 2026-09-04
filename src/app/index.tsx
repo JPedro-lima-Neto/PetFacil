@@ -1,98 +1,207 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
-
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
-}
+import { useState } from "react";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { router } from "expo-router";
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    backgroundColor: "#F7F9F7",
   },
-  safeArea: {
+
+  content: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    justifyContent: "center",
+    paddingHorizontal: 28,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+
+  logo: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: "#DFF3E7",
+    alignSelf: "center",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 15,
   },
+
+  paw: {
+    fontSize: 45,
+  },
+
   title: {
-    textAlign: 'center',
+    fontSize: 34,
+    fontWeight: "bold",
+    color: "#2E8B57",
+    textAlign: "center",
   },
-  code: {
-    textTransform: 'uppercase',
+
+  subtitle: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 6,
+    marginBottom: 35,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+
+  form: {
+    width: "100%",
+  },
+
+  label: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 7,
+    marginTop: 12,
+  },
+
+  input: {
+    height: 52,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D8DED9",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    color: "#222",
+  },
+
+  loginButton: {
+    height: 52,
+    backgroundColor: "#2E8B57",
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 25,
+  },
+
+  loginButtonText: {
+    color: "#FFFFFF",
+    fontSize: 17,
+    fontWeight: "bold",
+  },
+
+  accountText: {
+    textAlign: "center",
+    color: "#777",
+    marginTop: 25,
+    marginBottom: 10,
+  },
+
+  registerButton: {
+    height: 52,
+    borderWidth: 2,
+    borderColor: "#E78235",
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  registerButtonText: {
+    color: "#E78235",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  footer: {
+    textAlign: "center",
+    color: "#999",
+    fontSize: 12,
+    marginTop: 35,
   },
 });
+
+export default function LoginScreen() {
+  const [login, setLogin] = useState("");
+  const [senha, setSenha] = useState("");
+
+  function entrar() {
+    if (!login.trim() || !senha.trim()) {
+      Alert.alert("Atenção", "Informe o login e a senha.");
+      return;
+    }
+
+    router.replace("/produtos");
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.content}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={styles.logo}>
+          <Text style={styles.paw}>🐾</Text>
+        </View>
+
+        <Text style={styles.title}>Pet</Text>
+
+        <Text style={styles.subtitle}>
+          Tudo para o seu melhor amigo
+        </Text>
+
+        <View style={styles.form}>
+          <Text style={styles.label}>Login</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Digite seu e-mail"
+            placeholderTextColor="#999"
+            value={login}
+            onChangeText={setLogin}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+
+          <Text style={styles.label}>Senha</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Digite sua senha"
+            placeholderTextColor="#999"
+            value={senha}
+            onChangeText={setSenha}
+            secureTextEntry
+          />
+
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={entrar}
+          >
+            <Text style={styles.loginButtonText}>
+              Entrar
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={styles.accountText}>
+            Ainda não possui uma conta?
+          </Text>
+
+          <TouchableOpacity
+            style={styles.registerButton}
+            onPress={() => router.push("/cadastro")}
+          >
+            <Text style={styles.registerButtonText}>
+              Criar cadastro
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.footer}>
+          PetFácil • Cuidando de quem faz parte da família
+        </Text>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
