@@ -8,8 +8,9 @@ import {
   View,
 } from "react-native";
 
-import { produtos } from "../data/produtos";
+import AssistenteButton from "../components/AssistenteButton";
 import { useCarrinho } from "../context/CarrinhoContext";
+import { produtos } from "../data/produtos";
 
 const styles = StyleSheet.create({
   container: {
@@ -20,6 +21,11 @@ const styles = StyleSheet.create({
   content: {
     padding: 22,
     paddingBottom: 40,
+  },
+
+  assistantRow: {
+    alignItems: "flex-end",
+    marginBottom: 12,
   },
 
   imageArea: {
@@ -259,6 +265,10 @@ export default function ProdutoScreen() {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
+      <View style={styles.assistantRow}>
+        <AssistenteButton />
+      </View>
+
       <View style={styles.imageArea}>
         <Text style={styles.emoji}>
           {produto.emoji}

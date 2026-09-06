@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 
+import AssistenteButton from "../components/AssistenteButton";
 import { useCarrinho } from "../context/CarrinhoContext";
 
 const styles = StyleSheet.create({
@@ -15,6 +16,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F7F9F7",
     padding: 18,
+  },
+
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
 
   title: {
@@ -179,6 +186,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+
+  emptyAssistant: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+  },
 });
 
 export default function CarrinhoScreen() {
@@ -223,6 +236,8 @@ export default function CarrinhoScreen() {
   if (carrinho.length === 0) {
     return (
       <View style={styles.emptyContainer}>
+        <AssistenteButton style={styles.emptyAssistant} />
+
         <Text style={styles.emptyEmoji}>🛒</Text>
 
         <Text style={styles.emptyTitle}>
@@ -247,7 +262,10 @@ export default function CarrinhoScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Seu pedido 🐾</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Seu pedido 🐾</Text>
+        <AssistenteButton />
+      </View>
 
       <Text style={styles.subtitle}>
         {quantidadeItens}{" "}

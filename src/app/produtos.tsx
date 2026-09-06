@@ -9,8 +9,9 @@ import {
   View,
 } from "react-native";
 
-import { produtos } from "../data/produtos";
+import AssistenteButton from "../components/AssistenteButton";
 import { useCarrinho } from "../context/CarrinhoContext";
+import { produtos } from "../data/produtos";
 
 const styles = StyleSheet.create({
   container: {
@@ -112,6 +113,12 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
+  detailsButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
   imageArea: {
     width: 85,
     height: 85,
@@ -177,16 +184,37 @@ const styles = StyleSheet.create({
     color: "#2E8B57",
   },
 
+  actionArea: {
+    marginLeft: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+
+  addButton: {
+    minWidth: 86,
+    backgroundColor: "#2E8B57",
+    borderRadius: 9,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    alignItems: "center",
+  },
+
+  addButtonText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+
   arrow: {
-    fontSize: 30,
+    fontSize: 24,
     color: "#AAA",
-    paddingLeft: 8,
   },
 });
 
 export default function ProdutosScreen() {
   const [busca, setBusca] = useState("");
-  const { quantidadeItens } = useCarrinho();
+  const { quantidadeItens, adicionarAoCarrinho } = useCarrinho();
 
   const produtosFiltrados = produtos.filter((produto) =>
     produto.nome.toLowerCase().includes(busca.toLowerCase())
@@ -213,12 +241,7 @@ export default function ProdutosScreen() {
         </View>
 
         <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => router.push("/assistente")}
-          >
-            <Text style={styles.icon}>💬</Text>
-          </TouchableOpacity>
+          <AssistenteButton />
 
           <TouchableOpacity
             style={styles.iconButton}
@@ -259,55 +282,69 @@ export default function ProdutosScreen() {
             item.precoPromocional ?? item.precoAtual;
 
           return (
-            <TouchableOpacity
-              style={styles.card}
-              activeOpacity={0.8}
-              onPress={() => abrirProduto(item.id)}
-            >
-              <View style={styles.imageArea}>
-                <Text style={styles.emoji}>
-                  {item.emoji}
-                </Text>
-              </View>
+            <View style={styles.card}>
+              <TouchableOpacity
+                style={styles.detailsButton}
+                activeOpacity={0.8}
+                onPress={() => abrirProduto(item.id)}
+              >
+                <View style={styles.imageArea}>
+                  <Text style={styles.emoji}>
+                    {item.emoji}
+                  </Text>
+                </View>
 
-              <View style={styles.productInfo}>
-                <Text style={styles.category}>
-                  {item.tipo}
-                </Text>
+                <View style={styles.productInfo}>
+                  <Text style={styles.category}>
+                    {item.tipo}
+                  </Text>
 
-                <Text style={styles.productName}>
-                  {item.nome}
-                </Text>
+                  <Text style={styles.productName}>
+                    {item.nome}
+                  </Text>
 
-                {item.precoPromocional !== null && (
-                  <View style={styles.promotion}>
-                    <Text style={styles.promotionText}>
-                      PROMOÇÃO
-                    </Text>
-                  </View>
-                )}
-
-                <View style={styles.priceArea}>
                   {item.precoPromocional !== null && (
-                    <Text style={styles.oldPrice}>
+                    <View style={styles.promotion}>
+                      <Text style={styles.promotionText}>
+                        PROMOÇÃO
+                      </Text>
+                    </View>
+                  )}
+
+                  <View style={styles.priceArea}>
+                    {item.precoPromocional !== null && (
+                      <Text style={styles.oldPrice}>
+                        R${" "}
+                        {item.precoAtual
+                          .toFixed(2)
+                          .replace(".", ",")}
+                      </Text>
+                    )}
+
+                    <Text style={styles.price}>
                       R${" "}
-                      {item.precoAtual
+                      {precoFinal
                         .toFixed(2)
                         .replace(".", ",")}
                     </Text>
-                  )}
-
-                  <Text style={styles.price}>
-                    R${" "}
-                    {precoFinal
-                      .toFixed(2)
-                      .replace(".", ",")}
-                  </Text>
+                  </View>
                 </View>
-              </View>
+              </TouchableOpacity>
 
-              <Text style={styles.arrow}>›</Text>
-            </TouchableOpacity>
+              <View style={styles.actionArea}>
+                <TouchableOpacity
+                  style={styles.addButton}
+                  activeOpacity={0.8}
+                  onPress={() => adicionarAoCarrinho(item)}
+                >
+                  <Text style={styles.addButtonText}>
+                    + Adicionar
+                  </Text>
+                </TouchableOpacity>
+
+                <Text style={styles.arrow}>›</Text>
+              </View>
+            </View>
           );
         }}
       />
