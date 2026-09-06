@@ -1,56 +1,40 @@
-# Welcome to your Expo app 👋
+# PetFacil
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo mobile de compras para pet shop desenvolvido em React Native.
 
-## Get started
+O projeto faz parte da Fase 1 da disciplina de Desenvolvimento Mobile e tem como objetivo disponibilizar um protótipo funcional e navegável do PetFacil, utilizando dados simulados (mock), sem integração com back-end ou banco de dados.
 
-1. Install dependencies
+## Funcionalidades
 
-   ```bash
-   npm install
-   ```
+- Cadastro de usuário com validação dos campos
+- Login simulado
+- Catálogo de produtos
+- Busca de produtos
+- Visualização dos detalhes de cada produto
+- Adição de produtos ao carrinho pelo catálogo ou pela tela de detalhes
+- Controle de quantidade dos produtos no carrinho
+- Remoção de produtos do carrinho
+- Cálculo do valor total do pedido
+- Finalização do pedido
+- Registro simulado das compras
+- Assistente virtual com perguntas e respostas simuladas
 
-2. Start the app
+## Tecnologias utilizadas
 
-   ```bash
-   npx expo start
-   ```
+- React Native
+- Expo
+- Expo Router
+- TypeScript
+- React Hooks
+- Context API
 
-In the output, you'll find options to open the app in a
+## Estrutura do projeto
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+src/
+├── app/          # Telas e navegação da aplicação
+├── components/   # Componentes reutilizáveis
+├── context/      # Contextos e gerenciamento de estado
+├── data/         # Dados mockados dos produtos
+└── hooks/        # Hooks utilizados pelo projeto
 ```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
