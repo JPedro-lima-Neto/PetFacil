@@ -38,3 +38,90 @@ src/
 ├── data/         # Dados mockados dos produtos
 └── hooks/        # Hooks utilizados pelo projeto
 ```
+
+## Pré-requisitos
+
+Antes de executar o projeto, é necessário ter instalado:
+
+- Node.js
+- npm
+- Expo Go no celular ou um emulador Android/iOS
+
+## Instalação
+
+Clone o repositório:
+
+```bash
+git clone https://github.com/JPedro-lima-Neto/PetFacil.git
+```
+
+Entre na pasta do projeto:
+
+```bash
+cd PetFacil
+```
+
+Instale as dependências:
+
+```bash
+npm install
+```
+
+## Executando o projeto
+
+Execute:
+
+```bash
+npx expo start
+```
+
+Após iniciar o Expo, você pode:
+
+- Escanear o QR Code utilizando o aplicativo Expo Go
+- Pressionar `a` para abrir no emulador Android
+- Pressionar `i` para abrir no simulador iOS, quando disponível
+- Pressionar `w` para executar a versão web
+
+## Fase 1
+
+Nesta etapa, a aplicação utiliza apenas dados locais e simulados.
+
+Não são utilizados:
+
+- Back-end
+- Banco de dados
+- Tokens de autenticação
+- Persistência remota
+
+A autenticação, os produtos, as compras e as respostas do assistente são simulados de acordo com os requisitos da Fase 1.
+
+## Fluxo principal
+
+```text
+Login
+  ↓
+Cadastro
+  ↓
+Login
+  ↓
+Catálogo
+  ↓
+Detalhes do produto
+  ↓
+Carrinho
+  ↓
+Finalização do pedido
+```
+
+O assistente virtual também pode ser acessado durante as principais etapas de navegação.
+
+## Integrantes
+
+- Lucas Tertoliano Nóbrega
+- José Pedro de Lima Neto
+
+## Disciplina
+
+Desenvolvimento Mobile
+
+Professor: Bruno Rafael Araújo Vasconcelos
