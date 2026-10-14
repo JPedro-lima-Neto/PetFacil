@@ -1,198 +1,86 @@
-import { useState } from "react";
+import { router } from "expo-router";
+import { useMemo, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
-import { router } from "expo-router";
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F7F9F7",
-  },
+import Botao from "../components/Botao";
+import CampoTexto from "../components/CampoTexto";
+import { cores } from "../constants/cores";
+import { useAuth } from "../context/AuthContext";
+import { ApiError } from "../services/api";
+import type { DadosCadastro } from "../types";
+import { avisar } from "../utils/alertas";
+import { formatarCPF } from "../utils/formatacao";
+import { validarCadastro } from "../utils/validacoes";
 
-  content: {
-    padding: 25,
-    paddingBottom: 50,
-  },
-
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#2E8B57",
-    marginTop: 10,
-  },
-
-  subtitle: {
-    color: "#777",
-    fontSize: 15,
-    marginTop: 5,
-    marginBottom: 20,
-  },
-
-  form: {
-    width: "100%",
-  },
-
-  label: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#333",
-    marginTop: 15,
-    marginBottom: 7,
-  },
-
-  input: {
-    height: 52,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#D8DED9",
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    color: "#222",
-  },
-
-  button: {
-    height: 54,
-    backgroundColor: "#2E8B57",
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 30,
-  },
-
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontWeight: "bold",
-  },
-});
-
-function validarEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function somenteNumeros(valor: string) {
-  return valor.replace(/\D/g, "");
-}
-
-function validarCPF(cpfInformado: string) {
-  const cpf = somenteNumeros(cpfInformado);
-
-  if (cpf.length !== 11) {
-    return false;
-  }
-
-  if (/^(\d)\1{10}$/.test(cpf)) {
-    return false;
-  }
-
-  let soma = 0;
-
-  for (let i = 0; i < 9; i++) {
-    soma += Number(cpf[i]) * (10 - i);
-  }
-
-  let primeiroDigito = (soma * 10) % 11;
-
-  if (primeiroDigito === 10) {
-    primeiroDigito = 0;
-  }
-
-  if (primeiroDigito !== Number(cpf[9])) {
-    return false;
-  }
-
-  soma = 0;
-
-  for (let i = 0; i < 10; i++) {
-    soma += Number(cpf[i]) * (11 - i);
-  }
-
-  let segundoDigito = (soma * 10) % 11;
-
-  if (segundoDigito === 10) {
-    segundoDigito = 0;
-  }
-
-  return segundoDigito === Number(cpf[10]);
-}
-
-function formatarCPF(valor: string) {
-  const numeros = somenteNumeros(valor).slice(0, 11);
-
-  return numeros
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-}
+type Campo = keyof DadosCadastro;
 
 export default function CadastroScreen() {
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [senha, setSenha] = useState("");
-  const [repetirSenha, setRepetirSenha] = useState("");
+  const { cadastrar } = useAuth();
 
-  function cadastrar() {
-    if (nome.trim().length < 2) {
-      Alert.alert(
-        "Cadastro inválido",
-        "Informe um nome com pelo menos 2 caracteres."
+  const [dados, setDados] = useState<DadosCadastro>({
+    nomeCompleto: "",
+    email: "",
+    cpf: "",
+    senha: "",
+    repetirSenha: "",
+  });
+  // campos que o usuário já tocou (para não mostrar erro antes da hora)
+  const [tocados, setTocados] = useState<Partial<Record<Campo, boolean>>>({});
+  // erros que vieram do servidor (ex.: CPF já cadastrado)
+  const [errosServidor, setErrosServidor] = useState<Partial<Record<Campo, string>>>({});
+  const [carregando, setCarregando] = useState(false);
+
+  // Validação em tempo real: recalculada a cada tecla digitada.
+  const erros = useMemo(() => validarCadastro(dados), [dados]);
+  const formularioValido = Object.keys(erros).length === 0;
+
+  function alterar(campo: Campo, valor: string) {
+    setDados((atual) => ({ ...atual, [campo]: valor }));
+    setTocados((atual) => ({ ...atual, [campo]: true }));
+    setErrosServidor((atual) => ({ ...atual, [campo]: undefined }));
+  }
+
+  // O erro só aparece depois que o campo foi tocado.
+  const erroDe = (campo: Campo) =>
+    tocados[campo] ? errosServidor[campo] ?? erros[campo] : undefined;
+
+  async function aoCadastrar() {
+    if (!formularioValido) return;
+
+    setCarregando(true);
+
+    try {
+      await cadastrar({
+        ...dados,
+        nomeCompleto: dados.nomeCompleto.trim(),
+        email: dados.email.trim(),
+      });
+
+      avisar("Cadastro realizado!", "Sua conta foi criada com sucesso.", () =>
+        router.replace("/")
       );
-      return;
+    } catch (e) {
+      if (e instanceof ApiError) {
+        if (e.campos) {
+          setErrosServidor(e.campos as Partial<Record<Campo, string>>);
+          setTocados({
+            nomeCompleto: true, email: true, cpf: true, senha: true, repetirSenha: true,
+          });
+        }
+        avisar("Não foi possível cadastrar", e.message);
+      } else {
+        avisar("Erro", "Não foi possível concluir o cadastro.");
+      }
+    } finally {
+      setCarregando(false);
     }
-
-    if (!validarEmail(email)) {
-      Alert.alert(
-        "Cadastro inválido",
-        "Informe um e-mail válido."
-      );
-      return;
-    }
-
-    if (!validarCPF(cpf)) {
-      Alert.alert(
-        "Cadastro inválido",
-        "Informe um CPF válido."
-      );
-      return;
-    }
-
-    if (!senha) {
-      Alert.alert(
-        "Cadastro inválido",
-        "Informe uma senha."
-      );
-      return;
-    }
-
-    if (senha !== repetirSenha) {
-      Alert.alert(
-        "Cadastro inválido",
-        "As senhas não são iguais."
-      );
-      return;
-    }
-
-    Alert.alert(
-      "Cadastro realizado!",
-      "Sua conta foi criada com sucesso.",
-      [
-        {
-          text: "Ir para o login",
-          onPress: () => router.replace("/"),
-        },
-      ]
-    );
   }
 
   return (
@@ -205,73 +93,81 @@ export default function CadastroScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>Criar sua conta 🐾</Text>
+        <Text style={styles.subtitle}>Cadastre-se para começar suas compras.</Text>
 
-        <Text style={styles.subtitle}>
-          Cadastre-se para começar suas compras.
-        </Text>
+        <CampoTexto
+          rotulo="Nome completo"
+          placeholder="Seu nome completo"
+          value={dados.nomeCompleto}
+          onChangeText={(v) => alterar("nomeCompleto", v)}
+          erro={erroDe("nomeCompleto")}
+        />
 
-        <View style={styles.form}>
-          <Text style={styles.label}>Nome completo</Text>
+        <CampoTexto
+          rotulo="E-mail"
+          placeholder="exemplo@email.com"
+          value={dados.email}
+          onChangeText={(v) => alterar("email", v)}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          erro={erroDe("email")}
+        />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Seu nome completo"
-            value={nome}
-            onChangeText={setNome}
+        <CampoTexto
+          rotulo="CPF"
+          placeholder="000.000.000-00"
+          value={dados.cpf}
+          onChangeText={(v) => alterar("cpf", formatarCPF(v))}
+          keyboardType="numeric"
+          maxLength={14}
+          erro={erroDe("cpf")}
+        />
+
+        <CampoTexto
+          rotulo="Senha"
+          placeholder="Digite sua senha"
+          value={dados.senha}
+          onChangeText={(v) => alterar("senha", v)}
+          secureTextEntry
+          erro={erroDe("senha")}
+        />
+
+        <CampoTexto
+          rotulo="Repetir senha"
+          placeholder="Digite a senha novamente"
+          value={dados.repetirSenha}
+          onChangeText={(v) => alterar("repetirSenha", v)}
+          secureTextEntry
+          erro={erroDe("repetirSenha")}
+        />
+
+        <View style={styles.botao}>
+          <Botao
+            titulo="Cadastrar"
+            onPress={aoCadastrar}
+            carregando={carregando}
+            desabilitado={!formularioValido}
           />
-
-          <Text style={styles.label}>E-mail</Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="exemplo@email.com"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-
-          <Text style={styles.label}>CPF</Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="000.000.000-00"
-            value={cpf}
-            onChangeText={(valor) => setCpf(formatarCPF(valor))}
-            keyboardType="numeric"
-            maxLength={14}
-          />
-
-          <Text style={styles.label}>Senha</Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Digite sua senha"
-            value={senha}
-            onChangeText={setSenha}
-            secureTextEntry
-          />
-
-          <Text style={styles.label}>Repetir senha</Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Digite a senha novamente"
-            value={repetirSenha}
-            onChangeText={setRepetirSenha}
-            secureTextEntry
-          />
-
-          <TouchableOpacity
-            style={styles.button}
-            onPress={cadastrar}
-          >
-            <Text style={styles.buttonText}>
-              Cadastrar
-            </Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: cores.fundo },
+  content: { padding: 25, paddingBottom: 50 },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: cores.verde,
+    marginTop: 10,
+  },
+  subtitle: {
+    color: "#777",
+    fontSize: 15,
+    marginTop: 5,
+    marginBottom: 6,
+  },
+  botao: { marginTop: 30 },
+});
