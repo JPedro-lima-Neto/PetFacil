@@ -41,3 +41,11 @@ example
 # generated native folders
 /ios
 /android
+
+# Fase 2
+.env
+.env.local
+server/node_modules/
+server/dist/
+server/data/
+server/.env
