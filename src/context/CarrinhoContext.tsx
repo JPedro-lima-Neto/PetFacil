@@ -2,27 +2,23 @@ import {
   createContext,
   ReactNode,
   useContext,
+  useEffect,
   useState,
 } from "react";
 
-import { Produto } from "../data/produtos";
+import { api } from "../services/api";
+import type { Compra, Produto } from "../types";
+import { useAuth } from "./AuthContext";
 
 type ItemCarrinho = Produto & {
   quantidade: number;
 };
 
-type Compra = {
-  produto: string;
-  preco: number;
-  data: string;
-};
-
 type CarrinhoContextType = {
   carrinho: ItemCarrinho[];
-  compras: Compra[];
   adicionarAoCarrinho: (produto: Produto) => void;
   removerDoCarrinho: (id: number) => void;
-  finalizarPedido: () => void;
+  finalizarPedido: () => Promise<{ compras: Compra[]; total: number }>;
   total: number;
   quantidadeItens: number;
 };
@@ -31,38 +27,28 @@ const CarrinhoContext = createContext<CarrinhoContextType>(
   {} as CarrinhoContextType
 );
 
-export function CarrinhoProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function CarrinhoProvider({ children }: { children: ReactNode }) {
+  const { usuario } = useAuth();
   const [carrinho, setCarrinho] = useState<ItemCarrinho[]>([]);
-  const [compras, setCompras] = useState<Compra[]>([]);
+
+  // Ao sair da conta, o carrinho é esvaziado.
+  useEffect(() => {
+    if (!usuario) setCarrinho([]);
+  }, [usuario]);
 
   function adicionarAoCarrinho(produto: Produto) {
     setCarrinho((carrinhoAtual) => {
-      const produtoExistente = carrinhoAtual.find(
-        (item) => item.id === produto.id
-      );
+      const existente = carrinhoAtual.find((item) => item.id === produto.id);
 
-      if (produtoExistente) {
+      if (existente) {
         return carrinhoAtual.map((item) =>
           item.id === produto.id
-            ? {
-                ...item,
-                quantidade: item.quantidade + 1,
-              }
+            ? { ...item, quantidade: item.quantidade + 1 }
             : item
         );
       }
 
-      return [
-        ...carrinhoAtual,
-        {
-          ...produto,
-          quantidade: 1,
-        },
-      ];
+      return [...carrinhoAtual, { ...produto, quantidade: 1 }];
     });
   }
 
@@ -72,38 +58,25 @@ export function CarrinhoProvider({
     );
   }
 
-  function finalizarPedido() {
-    const dataAtual = new Date().toLocaleDateString("pt-BR");
+  // Envia o pedido ao servidor. Lá, o preço é lido do banco e uma Compra é
+  // registrada para cada produto. O carrinho só é limpo se o servidor aceitar.
+  async function finalizarPedido() {
+    const itens = carrinho.map((item) => ({
+      produtoId: item.id,
+      quantidade: item.quantidade,
+    }));
 
-    const novasCompras: Compra[] = [];
-
-    carrinho.forEach((item) => {
-      const preco =
-        item.precoPromocional ?? item.precoAtual;
-
-      for (let i = 0; i < item.quantidade; i++) {
-        novasCompras.push({
-          produto: item.nome,
-          preco,
-          data: dataAtual,
-        });
-      }
-    });
-
-    setCompras((comprasAtuais) => [
-      ...comprasAtuais,
-      ...novasCompras,
-    ]);
-
+    const resultado = await api.criarPedido(itens);
     setCarrinho([]);
+
+    return resultado;
   }
 
-  const total = carrinho.reduce((soma, item) => {
-    const preco =
-      item.precoPromocional ?? item.precoAtual;
-
-    return soma + preco * item.quantidade;
-  }, 0);
+  const total = carrinho.reduce(
+    (soma, item) =>
+      soma + (item.precoPromocional ?? item.precoAtual) * item.quantidade,
+    0
+  );
 
   const quantidadeItens = carrinho.reduce(
     (soma, item) => soma + item.quantidade,
@@ -114,7 +87,6 @@ export function CarrinhoProvider({
     <CarrinhoContext.Provider
       value={{
         carrinho,
-        compras,
         adicionarAoCarrinho,
         removerDoCarrinho,
         finalizarPedido,

@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
 import {
-  Alert,
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,7 +11,10 @@ import {
 
 import AssistenteButton from "../components/AssistenteButton";
 import { useCarrinho } from "../context/CarrinhoContext";
-import { produtos } from "../data/produtos";
+import { api, ApiError } from "../services/api";
+import type { Produto } from "../types";
+import { confirmar } from "../utils/alertas";
+import { emojiDoProduto, formatarValidade } from "../utils/formatacao";
 
 const styles = StyleSheet.create({
   container: {
@@ -206,9 +210,33 @@ export default function ProdutoScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const { adicionarAoCarrinho } = useCarrinho();
 
-  const produtoEncontrado = produtos.find(
-    (item) => item.id === Number(id)
-  );
+  const [produtoEncontrado, setProdutoEncontrado] = useState<Produto | null>(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+
+  useEffect(() => {
+    async function carregarProduto() {
+      try {
+        setProdutoEncontrado(await api.obterProduto(Number(id)));
+      } catch (e) {
+        setErro(
+          e instanceof ApiError ? e.message : "Não foi possível carregar este produto."
+        );
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    carregarProduto();
+  }, [id]);
+
+  if (carregando) {
+    return (
+      <View style={styles.notFound}>
+        <ActivityIndicator size="large" color="#2E8B57" />
+      </View>
+    );
+  }
 
   if (!produtoEncontrado) {
     return (
@@ -220,7 +248,7 @@ export default function ProdutoScreen() {
         </Text>
 
         <Text style={styles.notFoundText}>
-          Não foi possível carregar este produto.
+          {erro || "Não foi possível carregar este produto."}
         </Text>
 
         <TouchableOpacity
@@ -243,20 +271,13 @@ export default function ProdutoScreen() {
   function adicionar() {
     adicionarAoCarrinho(produto);
 
-    Alert.alert(
-      "Produto adicionado! 🐾",
-      `${produto.nome} foi adicionado ao carrinho.`,
-      [
-        {
-          text: "Continuar comprando",
-          style: "cancel",
-        },
-        {
-          text: "Ver carrinho",
-          onPress: () => router.push("/carrinho"),
-        },
-      ]
-    );
+    confirmar({
+      titulo: "Produto adicionado! 🐾",
+      mensagem: `${produto.nome} foi adicionado ao carrinho.`,
+      textoCancelar: "Continuar comprando",
+      textoConfirmar: "Ver carrinho",
+      aoConfirmar: () => router.push("/carrinho"),
+    });
   }
 
   return (
@@ -271,7 +292,7 @@ export default function ProdutoScreen() {
 
       <View style={styles.imageArea}>
         <Text style={styles.emoji}>
-          {produto.emoji}
+          {emojiDoProduto(produto.tipo)}
         </Text>
       </View>
 
@@ -338,7 +359,7 @@ export default function ProdutoScreen() {
           </Text>
 
           <Text style={styles.infoValue}>
-            {produto.dataValidade}
+            {formatarValidade(produto.dataValidade)}
           </Text>
         </View>
       </View>

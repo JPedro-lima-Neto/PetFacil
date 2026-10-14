@@ -48,6 +48,7 @@ function Navegacao() {
         />
         <Stack.Screen name="detalhes" options={{ title: "Detalhes do produto" }} />
         <Stack.Screen name="carrinho" options={{ title: "Meu carrinho" }} />
+        <Stack.Screen name="compras" options={{ title: "Minhas compras" }} />
         <Stack.Screen name="assistente" options={{ title: "Assistente virtual" }} />
         <Stack.Screen name="sucesso" options={{ headerShown: false }} />
       </Stack.Protected>

@@ -1,6 +1,7 @@
 import { router } from "expo-router";
+import { useState } from "react";
 import {
-  Alert,
+  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -10,6 +11,9 @@ import {
 
 import AssistenteButton from "../components/AssistenteButton";
 import { useCarrinho } from "../context/CarrinhoContext";
+import { ApiError } from "../services/api";
+import { avisar, confirmar } from "../utils/alertas";
+import { emojiDoProduto } from "../utils/formatacao";
 
 const styles = StyleSheet.create({
   container: {
@@ -203,34 +207,37 @@ export default function CarrinhoScreen() {
     quantidadeItens,
   } = useCarrinho();
 
+  const [finalizando, setFinalizando] = useState(false);
+
+  async function enviarPedido() {
+    setFinalizando(true);
+
+    try {
+      await finalizarPedido(); // POST /pedidos
+      router.replace("/sucesso");
+    } catch (e) {
+      avisar(
+        "Não foi possível finalizar",
+        e instanceof ApiError ? e.message : "Tente novamente em instantes."
+      );
+    } finally {
+      setFinalizando(false);
+    }
+  }
+
   function finalizar() {
     if (carrinho.length === 0) {
-      Alert.alert(
-        "Carrinho vazio",
-        "Adicione algum produto antes de finalizar."
-      );
+      avisar("Carrinho vazio", "Adicione algum produto antes de finalizar.");
       return;
     }
 
-    Alert.alert(
-      "Finalizar pedido",
-      `O total do seu pedido é R$ ${total
+    confirmar({
+      titulo: "Finalizar pedido",
+      mensagem: `O total do seu pedido é R$ ${total
         .toFixed(2)
         .replace(".", ",")}.\n\nO pagamento será realizado na retirada na loja.`,
-      [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
-        {
-          text: "Confirmar",
-          onPress: () => {
-            finalizarPedido();
-            router.replace("/sucesso");
-          },
-        },
-      ]
-    );
+      aoConfirmar: enviarPedido,
+    });
   }
 
   if (carrinho.length === 0) {
@@ -285,7 +292,7 @@ export default function CarrinhoScreen() {
             <View style={styles.card}>
               <View style={styles.emojiArea}>
                 <Text style={styles.emoji}>
-                  {item.emoji}
+                  {emojiDoProduto(item.tipo)}
                 </Text>
               </View>
 
@@ -331,12 +338,17 @@ export default function CarrinhoScreen() {
         </Text>
 
         <TouchableOpacity
-          style={styles.finishButton}
+          style={[styles.finishButton, finalizando && { opacity: 0.6 }]}
           onPress={finalizar}
+          disabled={finalizando}
         >
-          <Text style={styles.finishButtonText}>
-            Finalizar pedido
-          </Text>
+          {finalizando ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.finishButtonText}>
+              Finalizar pedido
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>

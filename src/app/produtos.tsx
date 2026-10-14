@@ -1,6 +1,7 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -10,8 +11,12 @@ import {
 } from "react-native";
 
 import AssistenteButton from "../components/AssistenteButton";
+import { useAuth } from "../context/AuthContext";
 import { useCarrinho } from "../context/CarrinhoContext";
-import { produtos } from "../data/produtos";
+import { api, ApiError } from "../services/api";
+import type { Produto } from "../types";
+import { confirmar } from "../utils/alertas";
+import { emojiDoProduto } from "../utils/formatacao";
 
 const styles = StyleSheet.create({
   container: {
@@ -89,6 +94,50 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#222",
     marginBottom: 22,
+  },
+
+  linksRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: -8,
+    marginBottom: 14,
+  },
+
+  linkText: {
+    color: "#2E8B57",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+
+  centro: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+
+  mensagemErro: {
+    color: "#C0392B",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+
+  tentarNovamente: {
+    backgroundColor: "#2E8B57",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+
+  tentarNovamenteTexto: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+  },
+
+  vazio: {
+    textAlign: "center",
+    color: "#777",
+    marginTop: 30,
   },
 
   sectionTitle: {
@@ -214,11 +263,47 @@ const styles = StyleSheet.create({
 
 export default function ProdutosScreen() {
   const [busca, setBusca] = useState("");
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [atualizando, setAtualizando] = useState(false);
+  const [erro, setErro] = useState("");
+
+  const { usuario, sair } = useAuth();
   const { quantidadeItens, adicionarAoCarrinho } = useCarrinho();
+
+  const carregarProdutos = useCallback(async () => {
+    setErro("");
+
+    try {
+      setProdutos(await api.listarProdutos());
+    } catch (e) {
+      setErro(
+        e instanceof ApiError ? e.message : "Não foi possível carregar os produtos."
+      );
+    } finally {
+      setCarregando(false);
+      setAtualizando(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    carregarProdutos();
+  }, [carregarProdutos]);
 
   const produtosFiltrados = produtos.filter((produto) =>
     produto.nome.toLowerCase().includes(busca.toLowerCase())
   );
+
+  const primeiroNome = usuario?.nomeCompleto.split(" ")[0] ?? "";
+
+  function confirmarSaida() {
+    confirmar({
+      titulo: "Sair da conta",
+      mensagem: "Deseja realmente sair?",
+      textoConfirmar: "Sair",
+      aoConfirmar: sair,
+    });
+  }
 
   function abrirProduto(id: number) {
     router.push({
@@ -233,7 +318,7 @@ export default function ProdutosScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.welcome}>Olá! 🐾</Text>
+          <Text style={styles.welcome}>Olá, {primeiroNome}! 🐾</Text>
 
           <Text style={styles.subtitle}>
             O que seu pet precisa hoje?
@@ -260,6 +345,16 @@ export default function ProdutosScreen() {
         </View>
       </View>
 
+      <View style={styles.linksRow}>
+        <TouchableOpacity onPress={() => router.push("/compras")}>
+          <Text style={styles.linkText}>🧾 Minhas compras</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={confirmarSaida}>
+          <Text style={styles.linkText}>Sair 🚪</Text>
+        </TouchableOpacity>
+      </View>
+
       <TextInput
         style={styles.search}
         placeholder="Buscar produtos..."
@@ -272,8 +367,34 @@ export default function ProdutosScreen() {
         Produtos
       </Text>
 
+      {carregando ? (
+        <View style={styles.centro}>
+          <ActivityIndicator size="large" color="#2E8B57" />
+        </View>
+      ) : erro ? (
+        <View style={styles.centro}>
+          <Text style={styles.mensagemErro}>{erro}</Text>
+          <TouchableOpacity
+            style={styles.tentarNovamente}
+            onPress={() => {
+              setCarregando(true);
+              carregarProdutos();
+            }}
+          >
+            <Text style={styles.tentarNovamenteTexto}>Tentar novamente</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
       <FlatList
         data={produtosFiltrados}
+        refreshing={atualizando}
+        onRefresh={() => {
+          setAtualizando(true);
+          carregarProdutos();
+        }}
+        ListEmptyComponent={
+          <Text style={styles.vazio}>Nenhum produto encontrado.</Text>
+        }
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.list}
@@ -290,7 +411,7 @@ export default function ProdutosScreen() {
               >
                 <View style={styles.imageArea}>
                   <Text style={styles.emoji}>
-                    {item.emoji}
+                    {emojiDoProduto(item.tipo)}
                   </Text>
                 </View>
 
@@ -348,6 +469,7 @@ export default function ProdutosScreen() {
           );
         }}
       />
+      )}
     </View>
   );
 }
