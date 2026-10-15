@@ -1,15 +1,31 @@
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 
 import type { Compra, DadosCadastro, Produto, Usuario } from "../types";
 
-// Endereço do servidor.
-// - Emulador Android: "localhost" é o próprio emulador, o PC é 10.0.2.2.
-// - Celular físico: defina EXPO_PUBLIC_API_URL no arquivo .env com o IP do PC
-//   (ex.: EXPO_PUBLIC_API_URL=http://192.168.0.15:3333).
-const URL_PADRAO =
-  Platform.OS === "android" ? "http://10.0.2.2:3333" : "http://localhost:3333";
+// Endereço do servidor (porta 3333). Ordem de decisão:
+// 1) EXPO_PUBLIC_API_URL no arquivo .env (manual, tem prioridade);
+// 2) o mesmo computador que está servindo o app (Metro): o Expo informa o IP
+//    dele em "hostUri" (ex.: 192.168.0.15:8081), então o celular físico
+//    encontra a API sem configurar nada;
+// 3) padrão: emulador Android = 10.0.2.2, iOS/web = localhost.
+const PORTA_API = 3333;
 
-export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? URL_PADRAO;
+function descobrirUrlDaApi(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+
+  const host = Constants.expoConfig?.hostUri?.split(":")[0];
+  const ehLocal = !host || host === "localhost" || host === "127.0.0.1";
+  const ehTunel = !!host && host.includes("exp.direct");
+
+  if (!ehLocal && !ehTunel) return `http://${host}:${PORTA_API}`;
+
+  return Platform.OS === "android"
+    ? `http://10.0.2.2:${PORTA_API}`
+    : `http://localhost:${PORTA_API}`;
+}
+
+export const API_URL = descobrirUrlDaApi();
 
 export class ApiError extends Error {
   constructor(

@@ -1,9 +1,9 @@
 import { router } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,

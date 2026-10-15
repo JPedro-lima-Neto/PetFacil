@@ -74,9 +74,7 @@ npx expo start
 
 - **Emulador Android:** funciona sem configuração (usa `10.0.2.2`).
 - **Simulador iOS / navegador:** funciona sem configuração (`localhost`).
-- **Celular físico (Expo Go):** copie `.env.example` para `.env` e coloque o IP do seu computador
-  na rede Wi-Fi: `EXPO_PUBLIC_API_URL=http://192.168.0.15:3333`. Celular e computador precisam estar
-  na mesma rede.
+- **Celular físico (Expo Go):** funciona sem configuração: o app descobre o IP do computador pelo Expo. Celular e computador precisam estar na **mesma rede Wi-Fi** e o Windows deve permitir o Node.js na rede privada (firewall). Se necessário, force o endereço criando um `.env` na raiz (veja `.env.example`) e reinicie com `npx expo start -c`.
 
 ## Endpoints
 

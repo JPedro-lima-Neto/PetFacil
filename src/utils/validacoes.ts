@@ -27,8 +27,6 @@ export function validarCPF(cpfInformado: string): boolean {
 
 export type ErrosCadastro = Partial<Record<keyof DadosCadastro, string>>;
 
-// Regras da seção 6 do enunciado. Retorna um objeto { campo: mensagem }
-// só com os campos que têm problema (vazio = formulário válido).
 export function validarCadastro(dados: DadosCadastro): ErrosCadastro {
   const erros: ErrosCadastro = {};
 
